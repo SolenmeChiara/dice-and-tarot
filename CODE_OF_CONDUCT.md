@@ -34,7 +34,7 @@
 
 ## 执行
 
-可以通过在 **[MaiM-with-u/plugin-repo 的 Issues 页面](https://github.com/MaiM-with-u/plugin-repo/issues)** 中提出问题来报告滥用、骚扰或其他不可接受的行为。所有投诉都将得到审查和调查，并将产生被认为是必要和适当的回应。项目团队有义务对事件的报告者保密。
+可以通过在 **[oFox-Studio/MoFox-Plugin-Repo 的 Issues 页面](https://github.com/MoFox-Studio/MoFox-Plugin-Repo/issues)** 中提出问题来报告滥用、骚扰或其他不可接受的行为。所有投诉都将得到审查和调查，并将产生被认为是必要和适当的回应。项目团队有义务对事件的报告者保密。
 
 ---
 本行为准该改编自 [Contributor Covenant](https://www.contributor-covenant.org) 2.1 版本。
