@@ -1,8 +1,6 @@
 name: Build and Deploy
 
 on:
-  schedule:
-    - cron: '0 0 * * *' # 每天零点执行
   workflow_dispatch: # 允许手动触发
 
 jobs:
