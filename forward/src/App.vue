@@ -1169,7 +1169,7 @@ const fetchPluginsData = async () => {
                 ]">
                   <li>插件技术问题：请直接联系插件开发者</li>
                   <li>违规举报：通过官方渠道举报恶意插件</li>
-                  <li>平台问题：联系MaiBot官方支持</li>
+                  <li>平台问题：联系MoFox-Bot官方支持</li>
                 </ul>
               </div>
 
