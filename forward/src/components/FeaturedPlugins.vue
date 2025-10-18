@@ -23,7 +23,7 @@ defineProps({
         :key="`featured-${plugin.id}`"
         @click="showPluginDetails(plugin)"
         :class="[
-          'featured-card group rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border cursor-pointer relative overflow-hidden',
+          'featured-card group rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border cursor-pointer relative overflow-hidden',
           isDarkMode
             ? 'bg-gray-800 border-gray-700'
             : 'bg-white border-gray-100'

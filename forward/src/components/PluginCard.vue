@@ -28,7 +28,7 @@ const formattedDate = computed(() => {
   <div
     @click="showPluginDetails(plugin)"
     :class="[
-      'plugin-card group rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border cursor-pointer relative',
+      'plugin-card group rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border cursor-pointer relative',
       isDarkMode
         ? 'bg-gray-800 border-gray-700'
         : 'bg-white border-gray-100',

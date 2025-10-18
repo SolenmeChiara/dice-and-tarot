@@ -92,7 +92,7 @@ const switchViewMode = async (mode) => {
             :class="[
               'px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2',
               viewMode === 'grid'
-                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg'
+                ? (isDarkMode ? 'bg-blue-400' : 'bg-blue-600') + ' text-white shadow-lg'
                 : isDarkMode
                   ? 'text-gray-300 hover:text-white hover:bg-gray-700'
                   : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
@@ -106,7 +106,7 @@ const switchViewMode = async (mode) => {
             :class="[
               'px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2',
               viewMode === 'list'
-                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg'
+                ? (isDarkMode ? 'bg-blue-400' : 'bg-blue-600') + ' text-white shadow-lg'
                 : isDarkMode
                   ? 'text-gray-300 hover:text-white hover:bg-gray-700'
                   : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
