@@ -1,0 +1,173 @@
+name: Generate Plugin Details
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'plugins.json'
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  generate-details:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate plugin details
+        run: |
+          node <<'EOL'
+          const fs = require('fs');
+          const https = require('https');
+
+          async function main() {
+            try {
+              const plugins = JSON.parse(fs.readFileSync('plugins.json', 'utf8'));
+              console.log(`在 plugins.json 中找到 ${plugins.length} 个插件`);
+
+              // 跳过第一个插件
+              const pluginsToProcess = plugins.slice(1);
+              console.log(`准备处理 ${pluginsToProcess.length} 个插件（跳过第一个）`);
+
+              const pluginDetails = [];
+              const errors = [];
+
+              for (const plugin of pluginsToProcess) {
+                try {
+                  console.log(`\n=== 正在获取插件清单：${plugin.id} ===`);
+                  console.log(`仓库地址：${plugin.repositoryUrl}`);
+                  const manifest = await fetchManifest(plugin.repositoryUrl);
+                  
+                  pluginDetails.push({
+                    id: plugin.id,
+                    manifest: manifest
+                  });
+                  
+                  console.log(`✅ 成功处理插件：${plugin.id}`);
+                } catch (error) {
+                  const errorMsg = `插件 ${plugin.id} 处理失败：${error.message}`;
+                  console.error(`❌ ${errorMsg}`);
+                  errors.push(errorMsg);
+                  // 继续处理其他插件，不中断整个流程
+                }
+              }
+
+              // 写入 plugin_details.json 文件
+              fs.writeFileSync('plugin_details.json', JSON.stringify(pluginDetails, null, 2));
+              console.log(`\n✅ 生成 plugin_details.json 文件，包含 ${pluginDetails.length} 个插件`);
+
+              // 报告错误统计
+              if (errors.length > 0) {
+                console.warn(`\n⚠️  处理过程中发现 ${errors.length} 个错误：`);
+                errors.forEach((error, index) => {
+                  console.warn(`${index + 1}. ${error}`);
+                });
+                console.warn(`\n成功率：${pluginDetails.length}/${pluginsToProcess.length} (${Math.round(pluginDetails.length / pluginsToProcess.length * 100)}%)`);
+              } else {
+                console.log(`\n🎉 所有插件处理成功！`);
+              }
+
+            } catch (error) {
+              console.error(`❌ 处理失败：${error.message}`);
+              process.exit(1);
+            }
+          }
+
+          async function fetchManifest(repoUrl) {
+            const branches = ['main', 'master'];
+            const filePaths = ['__init__.py', 'src/__init__.py', 'app/__init__.py']; // 常见路径
+
+            for (const branch of branches) {
+              for (const path of filePaths) {
+                const rawUrl = repoUrl.replace('github.com', 'raw.githubusercontent.com') + `/${branch}/${path}`;
+                console.log(`尝试从 ${branch} 分支的 ${path} 获取元数据：${rawUrl}`);
+                
+                try {
+                  const fileContent = await fetchFileContent(rawUrl);
+                  const metadata = parseMetadata(fileContent);
+                  if (metadata) {
+                    console.log(`✅ 成功从 ${branch} 分支的 ${path} 获取到元数据`);
+                    return metadata;
+                  }
+                } catch (error) {
+                  console.log(`❌ 在 ${branch} 分支的 ${path} 获取失败: ${error.message}`);
+                }
+              }
+            }
+
+            throw new Error(`无法从任何分支或路径获取有效的 __plugin_meta__。请检查仓库结构和文件内容。仓库地址：${repoUrl}`);
+          }
+
+          function fetchFileContent(url) {
+            return new Promise((resolve, reject) => {
+              const req = https.get(url, res => {
+                if (res.statusCode !== 200) {
+                  return reject(new Error(`状态码：${res.statusCode}`));
+                }
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => resolve(data));
+                res.on('error', err => reject(new Error(`读取响应数据时出错：${err.message}`)));
+              });
+              req.on('error', err => reject(new Error(`网络错误：${err.message}`)));
+              req.setTimeout(10000, () => {
+                req.destroy();
+                reject(new Error(`请求超时`));
+              });
+            });
+          }
+          
+          function parseMetadata(content) {
+            // 匹配 __plugin_meta__ = PluginMetadata(...)
+            const match = content.match(/__plugin_meta__\s*=\s*PluginMetadata\s*\(([\s\S]*?)\)/);
+            if (!match || !match[1]) {
+              return null;
+            }
+            
+            let metadataStr = match[1];
+            const json = {};
+            
+            // 匹配键值对
+            const regex = /(\w+)\s*=\s*("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\[.*?\]|\{.*?\}|[\w\.]+)/g;
+            let item;
+            while ((item = regex.exec(metadataStr)) !== null) {
+               const key = item[1];
+               let value = item[2];
+               try {
+                   // 转换 Python 字面量
+                   value = value.replace(/\bTrue\b/g, 'true')
+                                .replace(/\bFalse\b/g, 'false')
+                                .replace(/\bNone\b/g, 'null')
+                                .replace(/'/g, '"');
+                   json[key] = JSON.parse(value);
+               } catch (e) {
+                   json[key] = value.replace(/^['"]|['"]$/g, ''); // 作为字符串
+               }
+            }
+            
+            return Object.keys(json).length > 0 ? json : null;
+          }
+
+          main();
+          EOL
+
+      - name: Commit and push plugin details
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add plugin_details.json
+          if git diff --staged --quiet; then
+            echo "没有变更需要提交"
+          else
+            git commit -m "自动生成 plugin_details.json"
+            git push
+            echo "✅ 已提交并推送 plugin_details.json 更新"
+          fi
