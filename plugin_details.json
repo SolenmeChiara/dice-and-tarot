@@ -1,15 +1,1 @@
-[
-  {
-    "id": "minecraft1024a.MaiBot-Send-Image-Plugin-SF",
-    "manifest": {
-      "name": "硅基流动生图插件",
-      "description": "发送图片的插件动作，支持通过硅基流动生成图片并发送，兼容base64图片返回方式。",
-      "usage": "暂无说明",
-      "version": "0.5",
-      "author": "yishang/一闪",
-      "license": "MIT",
-      "repository_url": "https://github.com/minecraft1024a/MaiBot-Send-Image-Plugin-SF"
-    },
-    "createdAt": "2025-10-18T11:24:46.013Z"
-  }
-]
+[]
