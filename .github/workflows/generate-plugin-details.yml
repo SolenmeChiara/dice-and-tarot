@@ -28,10 +28,12 @@ jobs:
           node-version: '20'
 
       - name: Generate plugin details
+        id: generate
         run: |
           node <<'EOL'
           const fs = require('fs');
           const https = require('https');
+          const core = require('@actions/core');
 
           async function main() {
             try {
@@ -68,6 +70,19 @@ jobs:
               // 写入 plugin_details.json 文件
               fs.writeFileSync('plugin_details.json', JSON.stringify(pluginDetails, null, 2));
               console.log(`\n✅ 生成 plugin_details.json 文件，包含 ${pluginDetails.length} 个插件`);
+
+              // 生成 commit message
+              let commitMessage = `自动生成 plugin_details.json`;
+              if (pluginDetails.length > 0) {
+                const pluginNames = pluginDetails.map(p => p.id).slice(0, 5).join(', ');
+                commitMessage += `\n\n更新了 ${pluginDetails.length} 个插件，包括：${pluginNames}`;
+                if (pluginDetails.length > 5) {
+                  commitMessage += ' 等...';
+                }
+              }
+              // 使用 echo 将 commit message 设置为输出
+              console.log(`::set-output name=commit_message::${commitMessage}`);
+
 
               // 报告错误统计
               if (errors.length > 0) {
@@ -172,7 +187,8 @@ jobs:
           if git diff --staged --quiet; then
             echo "没有变更需要提交"
           else
-            git commit -m "自动生成 plugin_details.json"
+            COMMIT_MESSAGE="${{ steps.generate.outputs.commit_message }}"
+            git commit -m "$COMMIT_MESSAGE"
             git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
             echo "✅ 已提交并推送 plugin_details.json 更新"
           fi
