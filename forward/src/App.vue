@@ -364,7 +364,7 @@ const fetchPluginsData = async () => {
             <span :class="[
               'text-lg font-semibold transition-colors',
               isDarkMode ? 'text-white' : 'text-gray-800'
-            ]">插件仓库</span>
+            ]">MoFox-Bot 插件仓库</span>
           </div>
           
           <!-- 右侧按钮组 -->
@@ -416,7 +416,7 @@ const fetchPluginsData = async () => {
           <p :class="[
             'text-xl mb-8',
             isDarkMode ? 'text-gray-300' : 'text-gray-600'
-          ]">在我们的插件市场中寻找能增强您体验的工具</p>
+          ]">在我们的插件市场中寻找能增强您MoFox-Bot体验的工具</p>
           
           <!-- 搜索框 -->
           <div class="max-w-2xl mx-auto">
@@ -1118,7 +1118,7 @@ const fetchPluginsData = async () => {
                 <p :class="[
                   'leading-relaxed text-base',
                   isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                ]">所有插件均由第三方开发者独立开发，<strong>MaiBot项目团队不承担任何责任</strong>。</p>
+                ]">所有插件均由第三方开发者独立开发，<strong>MoFox项目团队不承担任何责任</strong>。</p>
               </div>
 
               <div>
@@ -1134,7 +1134,7 @@ const fetchPluginsData = async () => {
                 ]">
                   <li>⚠️ 第三方插件可能存在安全风险：恶意代码、隐私泄露、系统崩溃</li>
                   <li>⚠️ 插件质量无法保证：功能缺陷、兼容性问题、法律风险</li>
-                  <li>⚠️ 使用风险完全自担：MaiBot团队不提供技术支持或售后服务</li>
+                  <li>⚠️ 使用风险完全自担：MoFox团队不提供技术支持或售后服务</li>
                 </ul>
               </div>
 

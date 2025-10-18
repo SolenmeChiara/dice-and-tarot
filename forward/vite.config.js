@@ -14,8 +14,8 @@ export default defineConfig({
     },
   },
   // 修复路径问题 - 根据部署环境设置正确的 base 路径
-  // 部署到 plugin-repo 项目的 docs 目录，所以使用 /plugin-repo/
-  base: process.env.NODE_ENV === 'production' ? '/plugin-repo/' : '/',
+  // 部署到 MoFox-Plugin-Repo 项目的 docs 目录，所以使用 /MoFox-Plugin-Repo/
+  base: process.env.NODE_ENV === 'production' ? '/MoFox-Plugin-Repo/' : '/',
   build: {
     // 修复构建输出目录 - 输出到当前项目的 dist 目录
     outDir: 'dist',
