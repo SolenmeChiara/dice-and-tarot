@@ -6,6 +6,9 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+        contents: write
+        issues: write
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -28,6 +31,6 @@ jobs:
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.PAT }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./forward/dist
           publish_branch: gh-pages

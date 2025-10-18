@@ -13,11 +13,14 @@ on:
 jobs:
   generate-details:
     runs-on: ubuntu-latest
+    permissions:
+        contents: write
+        issues: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.GITHUB_TOKEN  }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -170,6 +173,6 @@ jobs:
             echo "没有变更需要提交"
           else
             git commit -m "自动生成 plugin_details.json"
-            git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
+            git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
             echo "✅ 已提交并推送 plugin_details.json 更新"
           fi
