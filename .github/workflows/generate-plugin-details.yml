@@ -84,8 +84,12 @@ jobs:
                   commitMessage += ' 等...';
                 }
               }
-              // 使用 echo 将 commit message 设置为输出
-              console.log(`::set-output name=commit_message::${commitMessage}`);
+              // 将 commit message 写入 GITHUB_OUTPUT
+              const commitMessageKey = 'commit_message';
+              const eofMarker = `EOF_${Math.random().toString(36).substring(2, 15)}`;
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, `${commitMessageKey}<<${eofMarker}\n`);
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, `${commitMessage}\n`);
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, `${eofMarker}\n`);
 
 
               // 报告错误统计
@@ -191,8 +195,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "没有变更需要提交"
           else
-            COMMIT_MESSAGE="${{ steps.generate.outputs.commit_message }}"
-            git commit -m "$COMMIT_MESSAGE"
+            git commit -m "${{ steps.generate.outputs.commit_message }}"
             git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
             echo "✅ 已提交并推送 plugin_details.json 更新"
           fi
