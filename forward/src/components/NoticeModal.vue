@@ -110,7 +110,7 @@ const handleClose = () => {
               <p :class="[
                 'leading-relaxed text-sm',
                 isDarkMode ? 'text-gray-400' : 'text-gray-500'
-              ]">💡 继续使用即表示您已阅读并同意《<a href="./PLUGIN_MARKET_NOTICE.md" class="underline hover:text-blue-500 transition-colors" target="_blank">MaiBot插件市场使用公告</a>》的全部条款。</p>
+              ]">💡 继续使用即表示您已阅读并同意《<a href="./PLUGIN_MARKET_NOTICE.md" class="underline hover:text-blue-500 transition-colors" target="_blank">MoFox-Bot插件市场使用公告</a>》的全部条款。</p>
             </div>
 
             <div class="flex items-center gap-2 mt-6">
