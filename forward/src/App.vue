@@ -402,7 +402,7 @@ const fetchPluginsData = async () => {
             
             <!-- GitHub链接 -->
             <a 
-              href="https://github.com/MaiM-with-u/plugin-repo" 
+              href="https://github.com/MoFox-Studio/MoFox-Plugin-Repo" 
               target="_blank" 
               rel="noopener noreferrer"
               :class="[
