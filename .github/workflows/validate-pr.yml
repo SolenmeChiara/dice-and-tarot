@@ -1,63 +1,87 @@
+# GitHub Action 名称
 name: Validate Plugin Submission
+
+# 触发工作流程的事件
 on:
+  # 当有 pull request 事件时触发
   pull_request:
+    # 仅针对目标是 main 分支的 pull request
     branches:
       - main
+    # 仅当 plugins.json 文件被修改时触发
     paths:
       - 'plugins.json'
 
+# 定义一个或多个作业
 jobs:
+  # 作业的唯一标识符
   validate:
+    # 指定作业运行的虚拟环境
     runs-on: ubuntu-latest
+    # 作业中执行的步骤
     steps:
+      # 步骤 1: 检出 main 分支的代码
       - name: Checkout main branch
+        # 使用官方的 actions/checkout@v4
         uses: actions/checkout@v4
         with:
+          # 指定检出的分支为 main
           ref: main
+          # 将代码检出到 'main' 目录下
           path: main
 
+      # 步骤 2: 检出 pull request 分支的代码
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
+          # 将代码检出到 'pr' 目录下
           path: pr
 
+      # 步骤 3: 设置 Node.js 环境
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
+          # 指定 Node.js 版本为 '20'
           node-version: '20'
+
+      # 步骤 4: 验证新的插件条目
       - name: Validate new plugin entry
+        # 运行一个内联的 Node.js 脚本
         run: |
           node <<'EOL'
           const fs = require('fs');
           const https = require('https');
 
+          // 主函数，执行所有验证逻辑
           async function main() {
             try {
+              // 读取 main 分支和 PR 分支的 plugins.json 文件
               const mainPlugins = JSON.parse(fs.readFileSync('main/plugins.json', 'utf8'));
               const prPlugins = JSON.parse(fs.readFileSync('pr/plugins.json', 'utf8'));
 
               console.log(`主分支有 ${mainPlugins.length} 个插件`);
               console.log(`PR 分支有 ${prPlugins.length} 个插件`);
 
-              // Create sets for both repository URLs and plugin IDs for comprehensive comparison
+              // 创建 Set 以便高效地查找仓库 URL 和插件 ID
               const mainRepoUrls = new Set(mainPlugins.map(p => p.repositoryUrl));
               const mainPluginIds = new Set(mainPlugins.map(p => p.id));
               
-              // Find plugins that are completely new (not in main branch)
-              const newPlugins = prPlugins.filter(p => 
+              // 筛选出在 PR 中新增的插件
+              const newPlugins = prPlugins.filter(p =>
                 !mainRepoUrls.has(p.repositoryUrl) && !mainPluginIds.has(p.id)
               );
 
-              // Find modified plugins (same ID or URL but different content)
+              // 筛选出在 PR 中被修改的插件
               const modifiedPlugins = prPlugins.filter(p => {
-                const mainPlugin = mainPlugins.find(mp => 
+                const mainPlugin = mainPlugins.find(mp =>
                   mp.repositoryUrl === p.repositoryUrl || mp.id === p.id
                 );
+                // 通过比较 JSON 字符串来判断内容是否发生变化
                 return mainPlugin && JSON.stringify(mainPlugin) !== JSON.stringify(p);
               });
 
-              // Check if PR is missing plugins that exist in main (potential merge conflict indicator)
-              const missingPlugins = mainPlugins.filter(mp => 
+              // 检查 PR 是否缺少 main 分支中已有的插件（可能是合并冲突的迹象）
+              const missingPlugins = mainPlugins.filter(mp =>
                 !prPlugins.some(p => p.repositoryUrl === mp.repositoryUrl || p.id === mp.id)
               );
 
@@ -67,12 +91,13 @@ jobs:
                 console.warn(`这表明 PR 分支可能已过时。建议对主分支进行变基操作。`);
               }
 
+              // 如果没有新增或修改的插件，则提前退出
               if (newPlugins.length === 0 && modifiedPlugins.length === 0) {
                 console.log('在 plugins.json 中未检测到新插件或修改的插件。');
                 process.exit(0);
               }
 
-              // Check for conflicts: duplicate IDs or URLs within the PR
+              // 检查 PR 内部是否存在重复的仓库 URL 或插件 ID
               const prRepoUrls = prPlugins.map(p => p.repositoryUrl);
               const prPluginIds = prPlugins.map(p => p.id);
               const duplicateUrls = prRepoUrls.filter((url, index) => prRepoUrls.indexOf(url) !== index);
@@ -85,20 +110,20 @@ jobs:
                 throw new Error(`在 PR 中发现重复的插件 ID：${duplicateIds.join(', ')}`);
               }
 
-              // Validate that only one new plugin is submitted per PR
+              // 验证每个 PR 只提交一个新插件
               if (newPlugins.length > 1) {
                 throw new Error('错误：每个 Pull Request 只能提交一个新插件。');
               }
 
-              // Process new plugins
               let validationErrors = [];
               
+              // 验证所有新增的插件
               for (const plugin of newPlugins) {
                 try {
                   console.log(`\n=== 验证新插件：${plugin.id} ===`);
                   console.log(`仓库地址：${plugin.repositoryUrl}`);
-                  const manifest = await fetchManifest(plugin.repositoryUrl);
-                  validateManifest(manifest, plugin);
+                  const metadata = await fetchMetadata(plugin.repositoryUrl);
+                  validateMetadata(metadata, plugin);
                   console.log(`✅ 新插件验证成功：${plugin.id}\n`);
                 } catch (error) {
                   const errorMsg = `新插件 ${plugin.id} 验证失败：${error.message}`;
@@ -107,13 +132,13 @@ jobs:
                 }
               }
 
-              // Process modified plugins
+              // 验证所有修改的插件
               for (const plugin of modifiedPlugins) {
                 try {
                   console.log(`\n=== 验证修改的插件：${plugin.id} ===`);
                   console.log(`仓库地址：${plugin.repositoryUrl}`);
-                  const manifest = await fetchManifest(plugin.repositoryUrl);
-                  validateManifest(manifest, plugin);
+                  const metadata = await fetchMetadata(plugin.repositoryUrl);
+                  validateMetadata(metadata, plugin);
                   console.log(`✅ 修改插件验证成功：${plugin.id}\n`);
                 } catch (error) {
                   const errorMsg = `修改插件 ${plugin.id} 验证失败：${error.message}`;
@@ -122,7 +147,7 @@ jobs:
                 }
               }
 
-              // Check if there were any validation errors
+              // 如果存在任何验证错误，则抛出异常并使 Action 失败
               if (validationErrors.length > 0) {
                 console.error(`\n❌ 发现 ${validationErrors.length} 个验证错误：`);
                 validationErrors.forEach((error, index) => {
@@ -131,7 +156,6 @@ jobs:
                 throw new Error(`插件验证失败，共 ${validationErrors.length} 个错误。请修复上述问题后重新提交。`);
               }
 
-              const totalChanges = newPlugins.length + modifiedPlugins.length;
               console.log(`✅ 验证成功！处理了 ${newPlugins.length} 个新插件和 ${modifiedPlugins.length} 个修改的插件。`);
             } catch (error) {
               console.error(`❌ 验证失败：${error.message}`);
@@ -139,104 +163,110 @@ jobs:
             }
           }
 
-          function fetchManifest(repoUrl) {
-            // Try multiple common branch names
-            const branches = ['main', 'master', 'dev', 'develop'];
-            
-            async function tryFetchFromBranch(branch) {
-              const rawUrl = repoUrl.replace('github.com', 'raw.githubusercontent.com') + `/refs/heads/${branch}/_manifest.json`;
-              console.log(`尝试从 ${branch} 分支获取清单文件：${rawUrl}`);
-              
-              return new Promise((resolve, reject) => {
-                const timeout = setTimeout(() => {
-                  reject(new Error(`获取清单文件超时（10秒）：${rawUrl}`));
-                }, 10000);
+          // 从插件仓库获取元数据
+          async function fetchMetadata(repoUrl) {
+            const branches = ['main', 'master'];
+            const filePaths = ['__init__.py', 'src/__init__.py', 'app/__init__.py']; // 常见的 __init__.py 路径
 
-                const req = https.get(rawUrl, res => {
-                  clearTimeout(timeout);
-                  
-                  if (res.statusCode !== 200) {
-                    return reject(new Error(`状态码：${res.statusCode}`));
-                  }
-                  
-                  let data = '';
-                  res.on('data', chunk => data += chunk);
-                  res.on('end', () => {
-                    try {
-                      const manifest = JSON.parse(data);
-                      resolve({ manifest, branch, url: rawUrl });
-                    } catch (parseError) {
-                      reject(new Error(`JSON 解析失败：${parseError.message}`));
-                    }
-                  });
-                  res.on('error', err => {
-                    clearTimeout(timeout);
-                    reject(new Error(`读取响应数据时出错：${err.message}`));
-                  });
-                });
-
-                req.on('error', err => {
-                  clearTimeout(timeout);
-                  reject(new Error(`网络错误：${err.message}`));
-                });
-
-                req.setTimeout(10000, () => {
-                  req.destroy();
-                  reject(new Error(`请求超时`));
-                });
-              });
-            }
-
-            // Try each branch until one succeeds
-            return (async () => {
-              const errors = [];
-              
-              for (const branch of branches) {
+            for (const branch of branches) {
+              for (const path of filePaths) {
+                const rawUrl = repoUrl.replace('github.com', 'raw.githubusercontent.com') + `/${branch}/${path}`;
+                console.log(`尝试从 ${branch} 分支的 ${path} 获取元数据：${rawUrl}`);
+                
                 try {
-                  const result = await tryFetchFromBranch(branch);
-                  console.log(`✅ 成功从 ${result.branch} 分支获取到清单文件`);
-                  return result.manifest;
+                  const fileContent = await fetchFileContent(rawUrl);
+                  const metadata = parseMetadata(fileContent);
+                  if (metadata) {
+                    console.log(`✅ 成功从 ${branch} 分支的 ${path} 获取到元数据`);
+                    return metadata;
+                  }
                 } catch (error) {
-                  errors.push(`${branch} 分支: ${error.message}`);
-                  console.log(`❌ ${branch} 分支获取失败: ${error.message}`);
+                  // 捕获特定路径的抓取失败，并继续尝试下一个
+                  console.log(`❌ 在 ${branch} 分支的 ${path} 获取失败: ${error.message}`);
                 }
               }
-              
-              // If all branches failed, throw a comprehensive error
-              throw new Error(`无法从任何分支获取 _manifest.json 文件。尝试的分支：${branches.join(', ')}。错误详情：\n${errors.map((err, i) => `${i + 1}. ${err}`).join('\n')}。\n\n请检查：\n1. 文件名是否为 '_manifest.json'（注意下划线）\n2. 仓库是否为公开仓库\n3. 文件是否存在于上述分支中\n仓库地址：${repoUrl}`);
-            })();
+            }
+            // 如果所有尝试都失败，则抛出总的错误
+            throw new Error(`无法从任何分支或路径获取有效的 __plugin_meta__。请检查仓库结构和文件内容。仓库地址：${repoUrl}`);
           }
 
-          function validateManifest(manifest, plugin) {
-            if (!manifest || typeof manifest !== 'object') {
-              throw new Error('_manifest.json 文件为空或格式无效');
-            }
-
-            const requiredFields = ['manifest_version', 'name', 'version', 'description', 'author', 'license', 'host_application'];
-            for (const field of requiredFields) {
-              if (!manifest[field]) throw new Error(`_manifest.json 缺少必需字段：'${field}'`);
+          // 抓取指定 URL 的文件内容
+          function fetchFileContent(url) {
+            return new Promise((resolve, reject) => {
+              const req = https.get(url, res => {
+                if (res.statusCode !== 200) {
+                  return reject(new Error(`状态码：${res.statusCode}`));
+                }
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => resolve(data));
+                res.on('error', err => reject(new Error(`读取响应数据时出错：${err.message}`)));
+              });
+              req.on('error', err => reject(new Error(`网络错误：${err.message}`)));
+              req.setTimeout(10000, () => { // 10秒超时
+                req.destroy();
+                reject(new Error(`请求超时`));
+              });
+            });
+          }
+          
+          // 从 __init__.py 文件内容中解析 __plugin_meta__
+          function parseMetadata(content) {
+            const match = content.match(/__plugin_meta__\s*=\s*PluginMetadata\s*\(([\s\S]*?)\)/);
+            if (!match || !match[1]) {
+              return null;
             }
             
-            if (typeof manifest.author !== 'object' || !manifest.author.name || !manifest.author.url) {
-                throw new Error("_manifest.json 'author' 字段必须是一个包含 'name' 和 'url' 属性的对象。");
+            let metadataStr = match[1];
+            const json = {};
+            
+            // 使用正则表达式匹配键值对
+            const regex = /(\w+)\s*=\s*("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\[.*?\]|\{.*?\}|[\w\.]+)/g;
+            let item;
+            while ((item = regex.exec(metadataStr)) !== null) {
+               const key = item[1];
+               let value = item[2];
+               try {
+                   // 尝试将 Python 字面量转换为 JSON 兼容格式并解析
+                   value = value.replace(/\bTrue\b/g, 'true')
+                                .replace(/\bFalse\b/g, 'false')
+                                .replace(/\bNone\b/g, 'null')
+                                .replace(/'/g, '"');
+                   json[key] = JSON.parse(value);
+               } catch (e) {
+                   // 如果解析失败，则作为普通字符串处理
+                   json[key] = value.replace(/^['"]|['"]$/g, '');
+               }
             }
-            if (typeof manifest.host_application !== 'object' || !manifest.host_application.min_version) {
-                throw new Error("_manifest.json 'host_application' 字段必须是一个包含 'min_version' 属性的对象。");
-            }
-
-            // Validate version format (should be semantic versioning)
-            const versionRegex = /^\d+\.\d+\.\d+/;
-            if (!versionRegex.test(manifest.version)) {
-              console.warn(`警告：插件版本 '${manifest.version}' 不符合语义化版本格式（如：1.0.0）`);
-            }
-
-            // Validate that plugin ID in plugins.json matches manifest name/id
-            if (plugin && plugin.id !== manifest.name) {
-              console.warn(`警告：plugins.json 中的插件 ID '${plugin.id}' 与清单文件中的名称 '${manifest.name}' 不同。建议保持一致。`);
-            }
-
-            console.log(`插件清单结构有效：${manifest.name} v${manifest.version}`);
+            
+            return Object.keys(json).length > 0 ? json : null;
           }
 
+          // 验证元数据的结构和内容
+          function validateMetadata(metadata, plugin) {
+            if (!metadata || typeof metadata !== 'object') {
+              throw new Error('__init__.py 文件中缺少有效的 __plugin_meta__');
+            }
+
+            const requiredFields = ['name', 'version', 'description', 'author'];
+            for (const field of requiredFields) {
+              if (!metadata[field]) throw new Error(`__plugin_meta__ 缺少必需字段：'${field}'`);
+            }
+            
+            // 验证版本号格式是否符合语义化版本
+            const versionRegex = /^\d+\.\d+\.\d+/;
+            if (!versionRegex.test(metadata.version)) {
+              console.warn(`警告：插件版本 '${metadata.version}' 不符合语义化版本格式（如：1.0.0）`);
+            }
+
+            // 验证 plugins.json 中的 ID 与元数据中的 name 是否一致
+            if (plugin && plugin.id !== metadata.name) {
+              console.warn(`警告：plugins.json 中的插件 ID '${plugin.id}' 与 __plugin_meta__ 中的名称 '${metadata.name}' 不同。建议保持一致。`);
+            }
+
+            console.log(`插件元数据结构有效：${metadata.name} v${metadata.version}`);
+          }
+
+          // 运行主函数
           main();
           EOL
