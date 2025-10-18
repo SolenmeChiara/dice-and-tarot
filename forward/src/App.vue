@@ -1231,7 +1231,7 @@ const fetchPluginsData = async () => {
         </div>
         <p class="text-gray-400 text-sm mb-4">为您的 MoFox 提供强大的插件支持</p>
         <div class="flex items-center justify-center gap-6 text-sm text-gray-400">
-          <a href="https://github.com/MaiM-with-u/plugin-repo" target="_blank" class="hover:text-white transition-colors flex items-center gap-1">
+          <a href="https://github.com/minecraft1024a/MoFox-Plugin-Repo" target="_blank" class="hover:text-white transition-colors flex items-center gap-1">
             <Icon icon="mdi:github" />
             GitHub
           </a>
