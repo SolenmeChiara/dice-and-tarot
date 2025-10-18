@@ -1,7 +1,8 @@
 <script setup>
 import { Icon } from '@iconify/vue'
+import { computed } from 'vue'
 
-defineProps({
+const props = defineProps({
   isDarkMode: Boolean,
   plugin: Object,
   index: Number,
@@ -9,6 +10,17 @@ defineProps({
   showPluginDetails: Function,
   openDownloadModal: Function,
   goToRepository: Function
+})
+
+const formattedDate = computed(() => {
+  if (!props.plugin.createdAt) {
+    return '未知'
+  }
+  return new Date(props.plugin.createdAt).toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  })
 })
 </script>
 
@@ -53,6 +65,11 @@ defineProps({
         'text-sm mb-4 line-clamp-2',
         isDarkMode ? 'text-gray-300' : 'text-gray-600'
       ]">{{ plugin.description }}</p>
+      
+      <div class="flex items-center text-xs mb-4" :class="isDarkMode ? 'text-gray-400' : 'text-gray-500'">
+        <Icon icon="mdi:clock-outline" class="mr-1" />
+        <span>上传于: {{ formattedDate }}</span>
+      </div>
       
       <div class="flex flex-wrap gap-1 mb-4">
         <div

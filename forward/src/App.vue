@@ -28,7 +28,8 @@ const {
   paginatedPlugins,
   totalPages,
   goToPage,
-  goToRepository
+  goToRepository,
+  sortOrder
 } = usePlugins()
 
 const { isDarkMode, toggleTheme } = useTheme()
@@ -84,6 +85,7 @@ onMounted(() => {
           :showPluginDetails="showPluginDetails"
           :openDownloadModal="openDownloadModal"
           :goToRepository="goToRepository"
+          v-model:sortOrder="sortOrder"
         />
        <Pagination
          :isDarkMode="isDarkMode"

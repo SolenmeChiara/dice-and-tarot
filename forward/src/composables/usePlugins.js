@@ -58,7 +58,8 @@ const fetchPlugins = async () => {
         tags: [...(manifest.categories || []), ...(manifest.keywords || [])].slice(0, 5),
         downloads: Math.floor(Math.random() * 10000) + 100,
         featured: Math.random() > 0.7,
-        icon: getIconByCategory(manifest.categories?.[0] || 'other')
+        icon: getIconByCategory(manifest.categories?.[0] || 'other'),
+        createdAt: item.createdAt
       }
     })
     
@@ -123,26 +124,55 @@ export function usePlugins() {
   // 搜索和分页状态，这些是每个组件实例独立的
   const searchQuery = ref('')
   const currentPage = ref(1)
+  const sortOrder = ref('newest')
   const itemsPerPage = 12
 
   // 推荐插件 - 这是计算属性，依赖全局的 plugins
   const featuredPlugins = computed(() => {
-    const featured = plugins.value.filter(p => p.featured)
-    const nonFeatured = plugins.value.filter(p => !p.featured)
-    while (featured.length < 3 && nonFeatured.length > 0) {
-      const randomIndex = Math.floor(Math.random() * nonFeatured.length)
-      featured.push(nonFeatured.splice(randomIndex, 1)[0])
+    // 确保在操作前复制一份插件数组，避免修改原始数据
+    const allPlugins = [...plugins.value]
+
+    // 如果插件总数不足4个，直接返回所有插件
+    if (allPlugins.length <= 4) {
+      return allPlugins
     }
-    return featured.slice(0, 3)
+
+    // 按 createdAt 降序排序，获取最新的插件
+    allPlugins.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+
+    // 获取最新的两个插件
+    const newestPlugins = allPlugins.slice(0, 2)
+
+    // 获取剩余的插件用于随机选择
+    const remainingPlugins = allPlugins.slice(2)
+
+    // 从剩余插件中随机选择两个
+    const randomPlugins = []
+    while (randomPlugins.length < 2 && remainingPlugins.length > 0) {
+      const randomIndex = Math.floor(Math.random() * remainingPlugins.length)
+      randomPlugins.push(remainingPlugins.splice(randomIndex, 1)[0])
+    }
+
+    // 合并并返回最终的插件列表
+    return [...newestPlugins, ...randomPlugins]
   })
 
   // 过滤后的插件
   const filteredPlugins = computed(() => {
-    const filtered = plugins.value.filter(plugin =>
+    let filtered = plugins.value.filter(plugin =>
       (plugin.name || '').toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       (plugin.description || '').toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       (plugin.author || '').toLowerCase().includes(searchQuery.value.toLowerCase())
     )
+
+    // Sort by creation date
+    if (sortOrder.value === 'newest') {
+      filtered = filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } else if (sortOrder.value === 'oldest') {
+      filtered = filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    }
+
+    // Then, sort by repository URL presence
     return filtered.sort((a, b) => {
       const aHasRepo = !!a.repositoryUrl
       const bHasRepo = !!b.repositoryUrl
@@ -197,6 +227,7 @@ export function usePlugins() {
     // 组件特定状态
     searchQuery,
     currentPage,
+    sortOrder,
     // 全局状态和方法
     isLoading,
     loadingStatus,

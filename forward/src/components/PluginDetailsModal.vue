@@ -102,14 +102,14 @@ defineProps({
           </h3>
           <div class="space-y-3">
             <!-- 分类 -->
-            <div v-if="selectedPlugin.categories && selectedPlugin.categories.length > 0">
+            <div>
               <p :class="[
                 'text-sm font-medium mb-2',
                 isDarkMode ? 'text-gray-400' : 'text-gray-500'
               ]">分类：</p>
-              <div class="flex flex-wrap gap-2">
-                <div 
-                  v-for="category in selectedPlugin.categories" 
+              <div v-if="selectedPlugin.categories && selectedPlugin.categories.length > 0" class="flex flex-wrap gap-2">
+                <div
+                  v-for="category in selectedPlugin.categories"
                   :key="category"
                   :class="[
                     'px-3 py-1 rounded-full text-sm font-medium',
@@ -119,16 +119,17 @@ defineProps({
                   {{ category }}
                 </div>
               </div>
+              <p v-else :class="isDarkMode ? 'text-gray-400' : 'text-gray-500'">无</p>
             </div>
             <!-- 关键词 -->
-            <div v-if="selectedPlugin.keywords && selectedPlugin.keywords.length > 0">
+            <div>
               <p :class="[
                 'text-sm font-medium mb-2',
                 isDarkMode ? 'text-gray-400' : 'text-gray-500'
               ]">关键词：</p>
-              <div class="flex flex-wrap gap-2">
-                <div 
-                  v-for="keyword in selectedPlugin.keywords" 
+              <div v-if="selectedPlugin.keywords && selectedPlugin.keywords.length > 0" class="flex flex-wrap gap-2">
+                <div
+                  v-for="keyword in selectedPlugin.keywords"
                   :key="keyword"
                   :class="[
                     'px-3 py-1 rounded-full text-sm font-medium',
@@ -138,6 +139,7 @@ defineProps({
                   {{ keyword }}
                 </div>
               </div>
+              <p v-else :class="isDarkMode ? 'text-gray-400' : 'text-gray-500'">无</p>
             </div>
           </div>
         </div>
@@ -184,6 +186,22 @@ defineProps({
                 isDarkMode ? 'text-gray-200' : 'text-gray-800'
               ]">{{ selectedPlugin.id }}</div>
             </div>
+            <div :class="[
+                'rounded-xl p-4 border md:col-span-2',
+                isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
+              ]">
+                <div :class="[
+                  'text-sm mb-1 flex items-center gap-2',
+                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                ]">
+                  <Icon icon="mdi:clock-outline" />
+                  上传时间
+                </div>
+                <div :class="[
+                  'font-medium text-sm',
+                  isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                ]">{{ selectedPlugin.createdAt || '未知' }}</div>
+              </div>
             <div v-if="selectedPlugin.homepageUrl" :class="[
               'rounded-xl p-4 border',
               isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'

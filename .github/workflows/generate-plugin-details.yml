@@ -58,7 +58,8 @@ jobs:
                   
                   pluginDetails.push({
                     id: plugin.id,
-                    manifest: manifest
+                    manifest: manifest,
+                    createdAt: new Date().toISOString()
                   });
                   
                   console.log(`✅ 成功处理插件：${plugin.id}`);

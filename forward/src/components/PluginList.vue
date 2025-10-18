@@ -16,7 +16,8 @@ const props = defineProps({
   fetchPlugins: Function,
   showPluginDetails: Function,
   openDownloadModal: Function,
-  goToRepository: Function
+  goToRepository: Function,
+  sortOrder: String
 })
 
 const viewMode = ref('grid')
@@ -40,10 +41,31 @@ const switchViewMode = async (mode) => {
 <template>
   <section>
     <div class="flex justify-between items-center mb-6">
-      <h2 :class="[
-        'text-3xl font-bold text-left',
-        isDarkMode ? 'text-white' : 'text-gray-800'
-      ]">全部插件</h2>
+      <div class="flex items-center gap-4">
+        <h2 :class="[
+          'text-3xl font-bold text-left',
+          isDarkMode ? 'text-white' : 'text-gray-800'
+        ]">全部插件</h2>
+        <div class="relative">
+          <select
+            :value="sortOrder"
+            @change="$emit('update:sortOrder', $event.target.value)"
+            :class="[
+              'appearance-none bg-transparent border rounded-full px-4 py-2 font-medium transition-colors',
+              isDarkMode
+                ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                : 'border-gray-300 text-gray-600 hover:bg-gray-100'
+            ]"
+          >
+            <option value="newest">从新到旧</option>
+            <option value="oldest">从旧到新</option>
+          </select>
+          <Icon icon="mdi:chevron-down" :class="[
+            'absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none',
+            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+          ]" />
+        </div>
+      </div>
       
       <div class="flex items-center gap-4">
         <div :class="[
