@@ -1,7 +1,6 @@
 <script setup>
 import { Icon } from '@iconify/vue'
 import { ref, computed, onMounted, nextTick } from 'vue'
-import DownloadModal from './components/DownloadModal.vue'
 
 // 搜索状态
 const searchQuery = ref('')
@@ -11,8 +10,6 @@ const itemsPerPage = 12
 // 弹窗状态
 const showModal = ref(false)
 const selectedPlugin = ref(null)
-const showDownloadModal = ref(false) // 下载弹窗状态
-const pluginToDownload = ref(null) // 准备下载的插件
 
 // 视图模式
 const viewMode = ref('grid') // 'grid' 或 'list'
@@ -196,20 +193,6 @@ const closeModal = () => {
   showModal.value = false
   selectedPlugin.value = null
   // 恢复背景滚动
-  document.body.style.overflow = ''
-}
-
-// 打开下载弹窗
-const openDownloadModal = (plugin) => {
-  pluginToDownload.value = plugin
-  showDownloadModal.value = true
-  document.body.style.overflow = 'hidden'
-}
-
-// 关闭下载弹窗
-const closeDownloadModal = () => {
-  showDownloadModal.value = false
-  pluginToDownload.value = null
   document.body.style.overflow = ''
 }
 
@@ -706,22 +689,8 @@ const fetchPluginsData = async () => {
                   </div>
                 </div>
                 
-                <!-- 按钮区域固定在右下角 -->
-                <div class="absolute bottom-4 right-4 flex gap-2">
-                  <button
-                    @click.stop="openDownloadModal(plugin)"
-                    :disabled="!plugin.repositoryUrl || plugin.repositoryUrl.trim() === ''"
-                    :class="[
-                      'px-4 py-2 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-200',
-                      plugin.repositoryUrl && plugin.repositoryUrl.trim() !== ''
-                        ? 'bg-green-500 hover:bg-green-600 text-white cursor-pointer'
-                        : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                    ]"
-                    title="下载插件"
-                  >
-                    <Icon icon="mdi:download" class="inline mr-1" />
-                    下载
-                  </button>
+                <!-- Repo按钮固定在右下角 -->
+                <div class="absolute bottom-4 right-4">
                   <button
                     @click.stop="goToRepository(plugin)"
                     :disabled="!plugin.repositoryUrl || plugin.repositoryUrl.trim() === ''"
@@ -808,25 +777,10 @@ const fetchPluginsData = async () => {
                           ]">v{{ plugin.version }}</div>
                         </div>
                         
-                        <!-- 按钮组 -->
-                        <div class="flex gap-2">
-                          <button
-                            @click.stop="openDownloadModal(plugin)"
-                            :disabled="!plugin.repositoryUrl || plugin.repositoryUrl.trim() === ''"
-                            :class="[
-                              'px-6 py-2 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-200 whitespace-nowrap',
-                              plugin.repositoryUrl && plugin.repositoryUrl.trim() !== ''
-                                ? 'bg-green-500 hover:bg-green-600 text-white cursor-pointer'
-                                : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                            ]"
-                            title="下载插件"
-                          >
-                            <Icon icon="mdi:download" class="inline mr-1" />
-                            下载
-                          </button>
-                          <button
-                            @click.stop="goToRepository(plugin)"
-                            :disabled="!plugin.repositoryUrl || plugin.repositoryUrl.trim() === ''"
+                        <!-- 仓库按钮 -->
+                        <button
+                          @click.stop="goToRepository(plugin)"
+                          :disabled="!plugin.repositoryUrl || plugin.repositoryUrl.trim() === ''"
                           :class="[
                             'px-6 py-2 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-200 whitespace-nowrap',
                             plugin.repositoryUrl && plugin.repositoryUrl.trim() !== ''
@@ -839,7 +793,6 @@ const fetchPluginsData = async () => {
                           <Icon icon="mdi:github" class="inline mr-1" />
                           Repo
                         </button>
-                        </div>
                       </div>
                     </div>
                   </div>
