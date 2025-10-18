@@ -6,10 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "build:github": "NODE_ENV=production vite build",
-    "deploy": "npm run build:github && cp -r dist/* ../plugin-repo/docs/",
-    "deploy:win": "npm run build:github && xcopy dist\\* ..\\plugin-repo\\docs\\ /E /H /Y"
+    "preview": "vite preview"
   },
   "dependencies": {
     "daisyui": "^5.0.46",
