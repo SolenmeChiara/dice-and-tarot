@@ -7,17 +7,16 @@
 在提交您的插件之前，请确保您的插件仓库满足以下**所有要求**：
 
 1.  **代码仓库公开**：您的插件必须是一个公开的 Git 仓库（推荐使用 GitHub）。
-2.  **`_manifest.json` 文件**：仓库的根目录下必须包含一个`_manifest.json`文件，且文件内容必须符合我们的规范。
-    -   必需字段：`manifest_version`, `name`, `version`, `description`, `author`, `license`, `host_application`。
-    -   `author` 必须是一个包含 `name` 和 `url` 的对象。
-    -   `host_application` 必须包含 `min_version` 字段。
+2.  **`__init__.py` 元数据文件**：仓库的根目录下必须包含一个 `__init__.py` 文件，用于定义插件的元数据。
+    -   **必需字段**：`name`, `description`, `author`, `license`, `repository_url`, `keywords`。
+    -   请确保所有必填字段都已正确填写，这将直接影响您的插件在插件市场的展示和搜索。
 
-    **`_manifest.json`文件详解**：[链接](https://docs.mai-mai.org/develop/plugin_develop/manifest-guide.html#%F0%9F%93%8B-%E5%AD%97%E6%AE%B5%E8%AF%B4%E6%98%8E)
+    **元数据文件详解**：[链接](https://docs.mofox-sama.com/docs/development/plugins/metadata-guide.html)
 
 > [!NOTE]
-> 虽然manifest文件不强制要求必须填写repository_url: 源码仓库地址，但是我们强烈建议您填写这个字段，有助于WebUI或其他第三方自动化软件一键部署您的插件
+> 一个结构清晰、内容详尽的元数据文件，是用户发现和了解您插件的关键。我们强烈建议您也填写 `usage`, `version`, `categories` 等字段来提供更丰富的信息。
 
-4.  **`LICENSE` 文件**：仓库根目录下必须包含一个`LICENSE`文件，其许可证类型应与`_manifest.json`中`license`字段的值一致。
+3.  **`LICENSE` 文件**：仓库根目录下必须包含一个`LICENSE`文件，其许可证类型应与`__init__.py`中`license`字段的值一致。
 5.  **优秀的 `README.md`**：我们强烈建议您的`README.md`文件包含清晰的功能介绍、使用说明以及至少一张截图或GIF动图。
 
 ## 提交步骤
