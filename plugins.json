@@ -6,6 +6,10 @@
     {
         "id": "minecraft1024a.MaiBot-Send-Image-Plugin-SF",
         "repositoryUrl": "https://github.com/minecraft1024a/MaiBot-Send-Image-Plugin-SF"
+    },
+    {
+        "id": "dice-and-tarot",
+        "repositoryUrl": "https://github.com/SolenmeChiara/mofox-dice-tarot-plugin"
     }
 ]
 
