@@ -40,8 +40,21 @@ jobs:
 
           async function main() {
             try {
+              console.log('🚀 开始生成插件详情...');
+              console.log('正在读取 plugins.json 文件...');
               const plugins = JSON.parse(fs.readFileSync('plugins.json', 'utf8'));
-              console.log(`在 plugins.json 中找到 ${plugins.length} 个插件`);
+              console.log(`✅ 成功读取 plugins.json，发现 ${plugins.length} 个插件`);
+
+              // 读取现有的 plugin_details.json 以保留 createdAt 时间
+              let existingDetails = new Map();
+              if (fs.existsSync('plugin_details.json')) {
+                console.log('发现现有的 plugin_details.json，正在读取...');
+                const oldDetails = JSON.parse(fs.readFileSync('plugin_details.json', 'utf8'));
+                for (const detail of oldDetails) {
+                  existingDetails.set(detail.id, detail.createdAt);
+                }
+                console.log(`✅ 成功读取 ${existingDetails.size} 个现有插件的创建时间`);
+              }
 
               // 跳过第一个插件
               const pluginsToProcess = plugins.slice(1);
@@ -56,10 +69,12 @@ jobs:
                   console.log(`仓库地址：${plugin.repositoryUrl}`);
                   const manifest = await fetchManifest(plugin.repositoryUrl);
                   
+                  const createdAt = existingDetails.get(plugin.id) || new Date().toISOString();
+
                   pluginDetails.push({
                     id: plugin.id,
                     manifest: manifest,
-                    createdAt: new Date().toISOString()
+                    createdAt: createdAt
                   });
                   
                   console.log(`✅ 成功处理插件：${plugin.id}`);
@@ -110,6 +125,7 @@ jobs:
           }
 
           async function fetchManifest(repoUrl) {
+            console.log(`\n🔍 开始为 ${repoUrl} 获取清单...`);
             const branches = ['main', 'master'];
             const filePaths = ['__init__.py', 'src/__init__.py', 'app/__init__.py']; // 常见路径
 
@@ -131,22 +147,33 @@ jobs:
               }
             }
 
+            console.error(`❌ 在所有预设路径和分支中都未能找到 ${repoUrl} 的有效元数据。`);
             throw new Error(`无法从任何分支或路径获取有效的 __plugin_meta__。请检查仓库结构和文件内容。仓库地址：${repoUrl}`);
           }
 
           function fetchFileContent(url) {
             return new Promise((resolve, reject) => {
+              console.log(`[GET] -> 正在请求 URL: ${url}`);
               const req = https.get(url, res => {
                 if (res.statusCode !== 200) {
+                  console.error(`[${res.statusCode}] <- 请求 ${url} 失败。`);
                   return reject(new Error(`状态码：${res.statusCode}`));
                 }
+                console.log(`[200 OK] <- 收到来自 ${url} 的成功响应。`);
                 let data = '';
                 res.on('data', chunk => data += chunk);
                 res.on('end', () => resolve(data));
-                res.on('error', err => reject(new Error(`读取响应数据时出错：${err.message}`)));
+                res.on('error', err => {
+                  console.error(`读取响应数据时出错: ${err.message}`);
+                  reject(new Error(`读取响应数据时出错：${err.message}`));
+                });
               });
-              req.on('error', err => reject(new Error(`网络错误：${err.message}`)));
+              req.on('error', err => {
+                console.error(`网络错误: ${err.message}`);
+                reject(new Error(`网络错误：${err.message}`));
+              });
               req.setTimeout(10000, () => {
+                console.error(`请求超时: ${url}`);
                 req.destroy();
                 reject(new Error(`请求超时`));
               });
