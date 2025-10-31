@@ -181,7 +181,8 @@ jobs:
           }
           
           function parseMetadata(content) {
-            // 匹配 __plugin_meta__ = PluginMetadata(...)
+            console.log('  [调试] 开始解析 __plugin_meta__ 内容...,传入内容:', content);
+            // 阶段 1: 匹配 PluginMetadata 括号内的完整内容
             const match = content.match(/__plugin_meta__\s*=\s*PluginMetadata\s*\(([\s\S]*?)\)/);
             if (!match || !match[1]) {
               console.log('  [调试] 未找到 __plugin_meta__ 匹配项。');
@@ -189,35 +190,68 @@ jobs:
             }
             console.log('  [调试] 成功匹配到 __plugin_meta__，准备解析内部参数...');
             
-            let metadataStr = match[1];
+            const metadataStr = match[1].trim();
             const json = {};
             
-            // 匹配键值对
-            const regex = /(\w+)\s*=\s*("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\[.*?\]|\{.*?\}|[\w\.]+)/g;
-            let item;
-            while ((item = regex.exec(metadataStr)) !== null) {
-               const key = item[1];
-               let value = item[2];
-               try {
-                   // 转换 Python 字面量
-                   const originalValue = value;
-                   value = value.replace(/\bTrue\b/g, 'true')
-                                .replace(/\bFalse\b/g, 'false')
-                                .replace(/\bNone\b/g, 'null')
-                                .replace(/'/g, '"');
-                   json[key] = JSON.parse(value);
-                   console.log(`    [调试] 解析成功: ${key} = ${JSON.stringify(json[key])}`);
-               } catch (e) {
-                   json[key] = value.replace(/^['"]|['"]$/g, ''); // 作为字符串
-                   console.warn(`    [调试] JSON.parse 失败，已回退为字符串: ${key} = "${json[key]}"`);
-               }
+            // 阶段 2: 逐行解析，处理多行字符串
+            const lines = metadataStr.split('\n').filter(line => line.trim().length > 0);
+            let currentKey = null;
+            let currentValue = '';
+            let inMultilineString = false;
+            let multilineQuote = '';
+
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+
+                // 如果在多行字符串内部
+                if (inMultilineString) {
+                    currentValue += '\n' + line; // 保留原始缩进和换行
+                    if (trimmedLine.endsWith(multilineQuote)) {
+                        console.log(`    [调试] 多行字符串结束: ${currentKey}`);
+                        inMultilineString = false;
+                        // 移除首尾的三个引号
+                        json[currentKey] = currentValue.substring(multilineQuote.length, currentValue.lastIndexOf(multilineQuote)).trim();
+                        currentKey = null;
+                        currentValue = '';
+                    }
+                    continue;
+                }
+
+                // 尝试匹配 "key = value" 结构
+                const assignmentMatch = trimmedLine.match(/^(\w+)\s*=\s*(.*)/);
+                if (assignmentMatch) {
+                    const [, key, value] = assignmentMatch;
+                    const cleanedValue = value.replace(/,$/, '').trim(); // 移除末尾逗号
+
+                    // 检查是否是多行字符串的开始
+                    if (cleanedValue.startsWith('"""') || cleanedValue.startsWith("'''")) {
+                        inMultilineString = true;
+                        multilineQuote = cleanedValue.slice(0, 3);
+                        currentKey = key;
+                        currentValue = cleanedValue; // 从包含引号开始
+                        console.log(`    [调试] 检测到多行字符串开始: ${key}`);
+                        // 处理单行情况下的多行字符串
+                        if (cleanedValue.endsWith(multilineQuote) && cleanedValue.length > 5) {
+                            inMultilineString = false;
+                            json[key] = cleanedValue.slice(3, -3).trim();
+                            console.log(`    [调试] (单行模式) 解析成功: ${key} = "${json[key]}"`);
+                            currentKey = null;
+                            currentValue = '';
+                        }
+                    } else {
+                        // 普通的单行字符串
+                        json[key] = cleanedValue.replace(/^['"]|['"]$/g, '');
+                        console.log(`    [调试] 解析成功: ${key} = "${json[key]}"`);
+                    }
+                }
             }
-            
+
+            // 阶段 3: 返回结果
             if (Object.keys(json).length > 0) {
               console.log(`  [调试] 解析完成，最终对象: ${JSON.stringify(json, null, 2)}`);
               return json;
             } else {
-              console.log('  [调试] 未能从 __plugin_meta__ 中解析出任何键值对。');
+              console.log('  [调试] 未能从 __plugin_meta__ 中解析出任何键值对。可能是格式问题。');
               return null;
             }
           }
