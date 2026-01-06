@@ -274,5 +274,29 @@
       "extra": "{\n        \"is_built_in\": false,\n    }"
     },
     "createdAt": "2026-01-06T16:37:09.031Z"
+  },
+  {
+    "id": "SolenmeChiara.mofox-self-awareness-plugin",
+    "manifest": {
+      "name": "Self Awareness",
+      "description": "让机器人知道自己最近做了什么，当用户提到「你发空间了」「你在群里说的话」等关键词时，自动将相关行为记录注入到上下文。",
+      "usage": "自动触发，无需手动配置。当检测到用户消息包含空间/聊天记录相关关键词时，会自动查询数据库并注入记录。",
+      "version": "1.0.0",
+      "author": "SolenmeChiara",
+      "license": "MIT",
+      "repository_url": "https://github.com/SolenmeChiara/mofox-self-awareness-plugin",
+      "keywords": [
+        "memory",
+        "self-awareness",
+        "qzone",
+        "action-tracking",
+        "prompt-injection"
+      ],
+      "categories": [
+        "utility",
+        "personality"
+      ]
+    },
+    "createdAt": "2026-01-06T17:28:56.305Z"
   }
 ]
